@@ -1,3 +1,5 @@
+{randomChoice} = require './helpers'
+
 module.exports = class Tree
     constructor: (@parent, @key, @level, @children=[]) ->
         @children_by_key = {}
@@ -26,8 +28,27 @@ module.exports = class Tree
 
     get: (key) ->
         # console.log '[Tree.get]', key
-        if typeof key == 'number'
-            return @children[key]
-        else if typeof key == 'string'
-            return @children_by_key[key]
+        return @children_by_key[key]
+
+    randomChild: ->
+        randomChoice @children
+
+    randomLeaf: ->
+        leaf = @randomChild()
+        if leaf.isLeaf()
+            return leaf
+        else
+            return leaf.randomLeaf()
+
+    isLeaf: ->
+        @children.length == 0
+
+    allLeaves: ->
+        all_leaves = []
+        for child in @children
+            if child.isLeaf()
+                all_leaves.push child
+            else
+                all_leaves = all_leaves.concat child.allLeaves()
+        return all_leaves
 
