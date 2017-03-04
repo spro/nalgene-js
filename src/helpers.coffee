@@ -38,8 +38,8 @@ exports.fixCapitalization = (s) ->
     s = s.split(/([.!?] )/).map(exports.capitalize).join('')
 
 exports.fixPunctuation = (s) ->
-    s = s.replace /\s+/, ' '
-    s = s.replace /\ ([,.!?])/, '$1'
+    s = s.replace /\s+/g, ' '
+    s = s.replace /\ ([,.!?])/g, '$1'
     s
 
 exports.asSentence = (tokens) -> exports.fixCapitalization exports.fixPunctuation tokens.join(' ')
