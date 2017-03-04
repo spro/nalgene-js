@@ -1,4 +1,3 @@
-parse = require './parse'
 {randomChoice, flatten, splitToken, asSentence} = require './helpers'
 
 # Helpers
@@ -8,8 +7,7 @@ parse = require './parse'
 
 # A sentence is generated from a grammar filename, context, and optional entry key
 
-module.exports = generate = (filename, context={}, entry_key='%') ->
-    root = parse(filename)
+module.exports = generate = (root, context={}, entry_key='%') ->
     phrases = expandPhrases root.get(entry_key), root
     good_phrases = filterPhrases phrases, context
     return asSentence expandTokens(good_phrases[0], root, context)

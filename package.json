@@ -1,4 +1,14 @@
 {
   "name": "nalgene",
-  "version": "0.0.1"
+  "version": "0.0.2",
+  "homepage": "http://github.com/spro/nalgene-js",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/spro/nalgene-js"
+  },
+  "license": "MIT",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "coffee --bare -o lib -c src"
+  }
 }
