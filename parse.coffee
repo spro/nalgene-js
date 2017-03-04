@@ -1,12 +1,10 @@
-fs = require 'fs'
 helpers = require './helpers'
 Tree = require './tree'
 
-# Parse an indented file as a Tree
+# Parse an indented string as a Tree
 
-module.exports = parse = (filename) ->
-    file = fs.readFileSync(filename, 'utf8').trim()
-    lines = file.split('\n')
+module.exports = parse = (grammar) ->
+    lines = grammar.split('\n')
         .map(helpers.countIndentation)
         .filter(helpers.isALine)
 
