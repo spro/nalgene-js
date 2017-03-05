@@ -8,7 +8,10 @@
 # A sentence is generated from a grammar filename, context, and optional entry key
 
 module.exports = generate = (root, context={}, entry_key='%') ->
-    phrases = expandPhrases root.get(entry_key), root
+    entry = root.get(entry_key)
+    if !entry?
+        throw new Error 'No such phrase on root: ' + entry_key
+    phrases = expandPhrases entry, root
 
     # Filter expanded phrases to those that can be resolved with the given context
     notInContext = (token) ->
@@ -75,7 +78,10 @@ expandPhrase = (key, root) ->
         if token.match /^%/
             new_expansions = []
             token = token.split('|')[0]
-            for e in expandPhrases root.get(token), root
+            sub_phrase = root.get(token)
+            if !sub_phrase
+                throw new Error 'No such phrase on root: ' + token
+            for e in expandPhrases sub_phrase, root
                 for expansion in expansions
                     new_expansions.push expansion.concat e
             expansions = new_expansions
@@ -104,8 +110,10 @@ expandTokens = (tokens, root, context) ->
                     continue
                 else
                     token = token.slice(0, -1)
-            synonyms = root.get(token)
-            synonym_tokens = synonyms.randomLeaf().key.split(' ')
+            synonym = root.get(token)
+            if !synonym
+                throw new Error 'No such synonym on root: ' + token
+            synonym_tokens = synonym.randomLeaf().key.split(' ')
             expanded = expanded.concat expandTokens synonym_tokens, root, context
 
         # Hash (keyed value given what's in context)
@@ -113,6 +121,8 @@ expandTokens = (tokens, root, context) ->
             [token, given...] = token.split('|')
 
             sub_phrase = root.get(token)
+            if !sub_phrase?
+                throw new Error 'No such hash on root: ' + token
 
             if given.length
                 for g in given
@@ -120,6 +130,9 @@ expandTokens = (tokens, root, context) ->
                         sub_phrase = sub_phrase.get(context[g])
                     else
                         sub_phrase = sub_phrase.get(g)
+            if !sub_phrase?
+                throw new Error 'No such value on hash: ' +
+                    token + '|' + given.map((g) -> context[g]).join('|')
             sub_tokens = sub_phrase.randomLeaf().key.split(' ')
             expanded = expanded.concat expandTokens sub_tokens, root, context
 
