@@ -28,3 +28,47 @@ module.exports = parse = (grammar) ->
         current_index = i
 
     return root
+
+# Turn a CSV with lines [category, sub_category, sub_category, ...] into a tree
+# 
+# For example, with this CSV:
+#
+#     category,high,low
+#     curious,you are curious,you are not curious
+#     brave,you are brave,you are not brave
+#
+# Create this tree:
+#
+#     curious
+#         high
+#             you are curious
+#         low
+#             you are not curious
+#     brave
+#         high
+#             you are brave
+#         low
+#             you are not brave
+
+parse.fromCSV = (csv, key) ->
+    lines = csv.trim().split('\n').map((l) -> l.trim().split(','))
+    sub_categories = lines.shift().slice(1)
+    tree = new Tree null, key
+    for line in lines
+        p = tree.addChild line[0]
+        for sub_i in [0...sub_categories.length]
+            sub_category = sub_categories[sub_i]
+            p.addChild(sub_category).addChild line[sub_i+1]
+    return tree
+
+parse.fromObject = (key, object) ->
+    tree = new Tree null, key
+    if Array.isArray object
+        for v in object
+            tree.addChild v
+    else if typeof object == 'object'
+        for k, v of object
+            tree.addChild Tree.fromObject tree, k, v
+    else
+        tree.addChild object
+    return tree

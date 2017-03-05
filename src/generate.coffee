@@ -46,6 +46,9 @@ module.exports = generate = (root, context={}, entry_key='%') ->
     good_phrases = phrases.filter (tokens) ->
         numNotInContext(tokens) == 0
 
+    if good_phrases.length == 0
+        throw new Error 'No viable phrases for entry ' + entry_key + ' with context: ' + JSON.stringify context
+
     # Choose a phrase that uses the most of the context
     good_phrases.sort (a, b) -> numInContext(b) - numInContext(a)
     num_in_best = numInContext(good_phrases[0])

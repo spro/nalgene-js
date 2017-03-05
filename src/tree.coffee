@@ -5,7 +5,10 @@ module.exports = class Tree
         @children_by_key = {}
 
     addChild: (child, level) ->
-        child = new Tree @, child, level
+        if !child.key?
+            child = new Tree @, child, level
+        else
+            child.parent = @
         @children.push child
         @children_by_key[child.key] = child
         return child
