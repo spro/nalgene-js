@@ -9,8 +9,37 @@
 
 module.exports = generate = (root, context={}, entry_key='%') ->
     phrases = expandPhrases root.get(entry_key), root
-    good_phrases = filterPhrases phrases, context
-    return asSentence expandTokens(good_phrases[0], root, context)
+
+    # Filter expanded phrases to those that can be resolved with the given context
+    notInContext = (token) ->
+        token.match(/^\$/) and !context[token]?
+
+    numNotInContext = (tokens) ->
+        flatten(tokens.map(splitToken))
+            .filter(notInContext).length
+
+    inContext = (token) ->
+        token.match(/^\$/) and context[token]?
+
+    numInContext = (tokens) ->
+        flatten(tokens.map(splitToken))
+            .filter(inContext).length
+
+    good_phrases = phrases.filter (tokens) ->
+        numNotInContext(tokens) == 0
+
+    # Choose a phrase that uses the most of the context
+    good_phrases.sort (a, b) -> numInContext(b) - numInContext(a)
+    num_in_best = numInContext(good_phrases[0])
+    best_phrases = []
+    for phrase in good_phrases
+        if numInContext(phrase) == num_in_best
+            best_phrases.push phrase
+        else
+            break
+    phrase = randomChoice best_phrases
+
+    return asSentence expandTokens(phrase, root, context)
 
 expandPhrases = (phrase, root) ->
     # console.log '[expandPhrases]', phrase.key
@@ -41,19 +70,6 @@ expandPhrase = (key, root) ->
                 expansion.push token
 
     return expansions
-
-# Filter expanded phrases to those that can be resolved with the given context
-
-filterPhrases = (phrases, context) ->
-    notInContext = (token) ->
-        if token.match /^\$/
-            !context[token]?
-        else
-            false
-
-    phrases.filter (tokens) ->
-        f = flatten(tokens.map(splitToken))
-        f.filter(notInContext).length == 0
 
 # Expand other tokens with context
 
