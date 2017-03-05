@@ -83,6 +83,11 @@ expandTokens = (tokens, root, context) ->
 
         # Synonym (randomly chosen)
         else if token.match /^~/
+            if token.match /\?$/
+                if Math.random() < 0.5
+                    continue
+                else
+                    token = token.slice(0, -1)
             synonyms = root.get(token)
             synonym_tokens = synonyms.randomLeaf().key.split(' ')
             expanded = expanded.concat expandTokens synonym_tokens, root, context
