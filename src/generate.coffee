@@ -15,15 +15,30 @@ module.exports = generate = (root, context={}, entry_key='%') ->
         token.match(/^\$/) and !context[token]?
 
     numNotInContext = (tokens) ->
-        flatten(tokens.map(splitToken))
-            .filter(notInContext).length
+        n = 0
+        used = {}
+        for token in flatten(tokens.map(splitToken))
+            if notInContext token
+                n += 1
+            else if inContext token
+                if used[token]
+                    n += 1
+                else
+                    used[token] = true
+        return n
 
     inContext = (token) ->
         token.match(/^\$/) and context[token]?
 
     numInContext = (tokens) ->
-        flatten(tokens.map(splitToken))
-            .filter(inContext).length
+        n = 0
+        used = {}
+        for token in flatten(tokens.map(splitToken))
+            if inContext token
+                if !used[token]
+                    used[token] = true
+                    n += 1
+        return n
 
     good_phrases = phrases.filter (tokens) ->
         numNotInContext(tokens) == 0
@@ -39,6 +54,7 @@ module.exports = generate = (root, context={}, entry_key='%') ->
             break
     phrase = randomChoice best_phrases
 
+    console.log "[generate total=#{phrases.length} good=#{good_phrases.length} best=#{best_phrases.length} used=#{num_in_best}]"
     return asSentence expandTokens(phrase, root, context)
 
 expandPhrases = (phrase, root) ->
