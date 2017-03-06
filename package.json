@@ -1,6 +1,6 @@
 {
   "name": "nalgene",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "homepage": "http://github.com/spro/nalgene-js",
   "repository": {
     "type": "git",
@@ -10,5 +10,8 @@
   "main": "lib/index.js",
   "scripts": {
     "build": "coffee --bare -o lib -c src"
+  },
+  "dependencies": {
+    "minimist": "^1.2.0"
   }
 }
