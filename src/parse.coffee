@@ -61,14 +61,14 @@ parse.fromCSV = (csv, key) ->
             p.addChild(sub_category).addChild line[sub_i+1]
     return tree
 
-parse.fromObject = (key, object) ->
+parse.fromObject = (object, key) ->
     tree = new Tree null, key
     if Array.isArray object
         for v in object
             tree.addChild v
     else if typeof object == 'object'
         for k, v of object
-            tree.addChild Tree.fromObject tree, k, v
+            tree.addChild parse.fromObject v, k
     else
         tree.addChild object
     return tree
