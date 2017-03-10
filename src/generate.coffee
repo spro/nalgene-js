@@ -62,7 +62,7 @@ module.exports = generate = (root, context={}, entry_key='%', options={}) ->
             break
     phrase = randomChoice best_phrases
 
-    console.log "[generate total=#{phrases.length} good=#{good_phrases.length} best=#{best_phrases.length} used=#{num_in_best}]"
+    # console.log "[generate total=#{phrases.length} good=#{good_phrases.length} best=#{best_phrases.length} used=#{num_in_best}]"
     return asSentence expandTokens(phrase, root, context)
 
 expandPhrases = (phrase, root) ->
@@ -133,7 +133,6 @@ expandTokens = (tokens, root, context) ->
                 throw new Error 'No values given for hash: ' + token
 
             for g in given
-                console.log 'g', g
                 if g.match /^\$/
                     sub_phrase = sub_phrase.get(context[g])
                 else

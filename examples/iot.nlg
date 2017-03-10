@@ -1,0 +1,39 @@
+%
+    ~ok? %response
+
+%response
+    %setState
+    %gotTime
+    %gotPrice
+    %gotWeather
+    %fallback
+
+%fallback
+    I'm not sure what happened.
+
+%setState
+    I turned the $device $state .
+    I turned $state the $device .
+    the $device is now $state .
+
+%gotTime
+    the time is $time .
+    it is ~currently? $time .
+
+%gotPrice
+    the price of $asset is ~currently? $price .
+    $asset is ~currently? at $price .
+
+%gotWeather
+    the temperature of $location is ~currently? $temperature .
+    the $location temperature is ~currently? $temperature .
+    the humidity of $location is ~currently? $humidity .
+    the $location humidity is ~currently? $humidity .
+
+~currently
+    currently
+    now
+
+~ok
+    ok,
+    sure,
