@@ -1,7 +1,5 @@
 {randomChoice, flatten, splitToken, asSentence} = require './helpers'
 
-# Helpers
-
 # Main generation
 # ------------------------------------------------------------------------------
 
