@@ -1,6 +1,6 @@
 {
   "name": "nalgene",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "homepage": "http://github.com/spro/nalgene-js",
   "repository": {
     "type": "git",
@@ -10,6 +10,9 @@
   "main": "lib/index.js",
   "scripts": {
     "build": "coffee --bare -o lib -c src"
+  },
+  "bin": {
+    "nalgene": "lib/generate.js"
   },
   "dependencies": {
     "minimist": "^1.2.0"
