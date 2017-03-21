@@ -1,6 +1,7 @@
 fs = require 'fs'
 minimist = require 'minimist'
 {randomChoice, flatten, splitToken, asSentence} = require './helpers'
+parse = require './parse'
 
 # Main generation
 # ------------------------------------------------------------------------------
@@ -149,6 +150,10 @@ expandTokens = (tokens, root, context) ->
             expanded.push token
 
     return expanded
+
+module.exports.fromPlainString = (string, context) ->
+    root = parse.fromObject {'%': string}
+    generate root, context
 
 # Run as a script
 if require.main == module
