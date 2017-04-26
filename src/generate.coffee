@@ -102,7 +102,10 @@ expandPhrase = (key, root) ->
 # Expand other tokens with context
 
 expandTokens = (tokens, root, context) ->
+    # console.log '[expandTokens]', tokens
     expanded = []
+    chosen_synonyms = {}
+
     for token in tokens
 
         # Variable (value directly from context)
@@ -119,7 +122,21 @@ expandTokens = (tokens, root, context) ->
             synonym = root.get(token)
             if !synonym
                 throw new Error 'No such synonym on root: ' + token
-            synonym_tokens = synonym.randomLeaf().key.split(' ')
+
+            pruned_synonym = synonym.prune(chosen_synonyms[token])
+
+            # Reset chosen list if empty
+            if pruned_synonym.children.length == 0
+                pruned_synonym = synonym
+                delete chosen_synonyms[token]
+
+            chosen_synonym = pruned_synonym.randomLeaf().key
+
+            # Add chosen to chosen list
+            chosen_synonyms[token] ||= []
+            chosen_synonyms[token].push chosen_synonym
+
+            synonym_tokens = chosen_synonym.split(' ')
             expanded = expanded.concat expandTokens synonym_tokens, root, context
 
         # Hash (keyed value given what's in context)
@@ -175,3 +192,4 @@ if require.main == module
 
     # Generate
     console.log generate grammar, context
+
