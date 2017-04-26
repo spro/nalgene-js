@@ -6,6 +6,7 @@ module.exports = class Tree
 
     addChild: (child, level) ->
         if !child.key?
+            # TODO: Why - child is string?
             child = new Tree @, child, level
         else
             child.parent = @
@@ -32,6 +33,11 @@ module.exports = class Tree
     get: (key) ->
         # console.log '[Tree.get]', key
         return @children_by_key[key]
+
+    prune: (remove_keys) ->
+        return @ if !remove_keys?.length
+        children = @children.filter (child) -> child.key not in remove_keys
+        new Tree @parent, @key, @level, children
 
     randomChild: ->
         randomChoice @children
