@@ -34,15 +34,27 @@ exports.isALine = ([i, s]) -> s.length > 0
 exports.splitToken = (token) ->
     token.split('|')
 
-exports.fixCapitalization = (s) ->
+exports.fixCapitalization = fixCapitalization = (s) ->
     s = s.split(/([.!?] )/).map(exports.capitalize).join('')
 
-exports.fixPunctuation = (s) ->
-    s = s.replace /\s+/g, ' '
+exports.fixPunctuation = fixPunctuation = (s) ->
+    s = s.trim().replace /\s+/g, ' '
     s = s.replace /\ ([,.!?])/g, '$1'
+    if s[-1] not in '.!?'
+        s += '.'
     s
 
-exports.asSentence = (tokens) -> exports.fixCapitalization exports.fixPunctuation tokens.join(' ')
+exports.flatten = flatten = (l) ->
+    flat = ''
+    for i in l
+        if Array.isArray i
+            flat += flatten i
+        else
+            flat += i + ' '
+    return flat
+
+exports.asSentence = (tokens) ->
+    fixCapitalization fixPunctuation flatten(tokens)
 
 # Helpers for printing
 

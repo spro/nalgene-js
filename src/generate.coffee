@@ -3,106 +3,100 @@ minimist = require 'minimist'
 {randomChoice, flatten, splitToken, asSentence} = require './helpers'
 parse = require './parse'
 
+VERBOSE = true
+
 # Main generation
 # ------------------------------------------------------------------------------
 
 # A sentence is generated from a grammar filename, context, and optional entry key
 
-module.exports = generate = (root, context={}, entry_key='%', options={}) ->
-    {skip_duplicates} = options
+group = (list, group_by=2) ->
+    grouped = []
+    for a in [0...Math.floor(list.length / group_by)]
+        grouped.push list.slice(a * group_by, (a + 1) * group_by)
+    return grouped
+
+listKeys = (list) ->
+    (l[0] for l in list)
+
+listValues = (list) ->
+    (l[1] for l in list)
+
+bestMatch = (child_keys, context) ->
+    for child_key in child_keys
+        context_keys = listKeys group context
+        score = scoreKey child_key, context_keys
+        if score == 0
+            return [child_key, listValues group context]
+    return [null, null]
+
+scoreKey = (child_key, context_keys) ->
+    if VERBOSE
+        console.log '[scoreKey]', child_key, context_keys
+    child_tokens = child_key.split(' ')
+    child_phrases = child_tokens.filter (t) -> t[0] in ['%', '$']
+    while context_keys.length
+        cc = context_keys.shift()
+        ci = child_phrases.indexOf cc
+        if ci == -1
+            return -1
+        else
+            child_phrases.splice(ci, 1)
+    return child_phrases.length # Number of unfulfilled phrases
+
+contextAsString = (l) ->
+    if typeof l == 'string'
+        l
+    else
+        group(l).map((g) -> g.map(contextAsString).join(': ')).join(', ')
+
+module.exports = generate = (root, entry_key='%' ,context={}, options={}) ->
+    if VERBOSE
+        console.log '\n[generate]', 'entry =', entry_key, 'context =', context
     entry = root.get(entry_key)
     if !entry?
         throw new Error 'No such phrase on root: ' + entry_key
 
-    phrases = expandPhrases entry, root
+    # Find best match of phrase from children of entry
+    child_keys = (child.key for child in entry.children)
+    [best_match, contexts] = bestMatch(child_keys, context)
+    if not best_match?
+        throw new Error "No best match for #{entry_key} with context #{contextAsString context}"
+        process.exit(0)
 
-    # Filter expanded phrases to those that can be resolved with the given context
-    notInContext = (token) ->
-        token.match(/^\$/) and !context[token]?
+    # Expand sub-tokens of best match
+    expanded = []
+    expandable = best_match.split(' ').filter (t) -> t[0] in ['%', '$']
 
-    numNotInContext = (tokens) ->
-        n = 0
-        used = {}
-        for token in flatten(tokens.map(splitToken))
-            if notInContext token
-                n += 1
-            else if inContext(token) and skip_duplicates
-                if used[token]
-                    n += 1
-                else
-                    used[token] = true
-        return n
+    for token in best_match.split(' ')
+        i = expandable.indexOf(token)
 
-    inContext = (token) ->
-        token.match(/^\$/) and context[token]?
-
-    numInContext = (tokens) ->
-        n = 0
-        used = {}
-        for token in flatten(tokens.map(splitToken))
-            if inContext token
-                if !used[token] or !skip_duplicates
-                    used[token] = true
-                    n += 1
-        return n
-
-    good_phrases = phrases.filter (tokens) ->
-        numNotInContext(tokens) == 0
-
-    if good_phrases.length == 0
-        throw new Error 'No viable phrases for entry ' + entry_key + ' with context: ' + JSON.stringify context
-
-    # Choose a phrase that uses the most of the context
-    good_phrases.sort (a, b) -> numInContext(b) - numInContext(a)
-    num_in_best = numInContext(good_phrases[0])
-    best_phrases = []
-    for phrase in good_phrases
-        if numInContext(phrase) == num_in_best
-            best_phrases.push phrase
+        if i > -1 # Expandable
+            expandable[i] = 'EXPANDED' # Replace so it doesn't match later
+            sub_context = contexts[i]
+            if token[0] == '%' # Expand sub phrase
+                expanded.push generate root, token, sub_context, options
+            else # Variable 
+                expanded.push sub_context
         else
-            break
-    phrase = randomChoice best_phrases
+            if token[0] == '~' # Synonym
+                if token.match /\?$/
+                    if Math.random() < 0.5
+                        continue
+                    else
+                        token = token.slice(0, -1)
+                synonym = root.get(token)
+                expanded.push synonym.randomLeaf().key
+            else # Regular word
+                expanded.push token
 
-    # console.log "[generate total=#{phrases.length} good=#{good_phrases.length} best=#{best_phrases.length} used=#{num_in_best}]"
-    return asSentence expandTokens(phrase, root, context)
-
-expandPhrases = (phrase, root) ->
-    # console.log '[expandPhrases]', phrase.key
-    flatten phrase.allLeaves().map (leaf) -> expandPhrase leaf.key, root
-
-# Expand phrase takes a root node and descends into every possible phrasing by
-# expanding only phrase (%) nodes. It returns a list of flat phrases (token lists)
-
-expandPhrase = (key, root) ->
-    # console.log '[expandPhrase]', key
-    expansions = [[]]
-    tokens = key.split(' ')
-
-    for token in tokens
-
-        # For sub-phrases we duplicate existing expansions with every possible sub-expansion
-        if token.match /^%/
-            new_expansions = []
-            token = token.split('|')[0]
-            sub_phrase = root.get(token)
-            if !sub_phrase
-                throw new Error 'No such phrase on root: ' + token
-            for e in expandPhrases sub_phrase, root
-                for expansion in expansions
-                    new_expansions.push expansion.concat e
-            expansions = new_expansions
-
-        # Non-phrase tokens are added directly to the end of expansions
-        else
-            for expansion in expansions
-                expansion.push token
-
-    return expansions
+    return expanded
 
 # Expand other tokens with context
 
 expandTokens = (tokens, root, context) ->
-    # console.log '[expandTokens]', tokens
+    if VERBOSE
+        console.log '[expandTokens]', tokens
     expanded = []
     chosen_synonyms = {}
 
