@@ -3,18 +3,12 @@ minimist = require 'minimist'
 {randomChoice, flatten, splitToken, asSentence} = require './helpers'
 parse = require './parse'
 
-VERBOSE = true
+VERBOSE = false
 
 # Main generation
 # ------------------------------------------------------------------------------
 
 # A sentence is generated from a grammar filename, context, and optional entry key
-
-group = (list, group_by=2) ->
-    grouped = []
-    for a in [0...Math.floor(list.length / group_by)]
-        grouped.push list.slice(a * group_by, (a + 1) * group_by)
-    return grouped
 
 listKeys = (list) ->
     (l[0] for l in list)
@@ -24,12 +18,15 @@ listValues = (list) ->
 
 bestMatch = (child_keys, context) ->
     for child_key in child_keys
-        context_keys = listKeys group context
+        context_keys = (child.key for child in context.children)
         score = scoreKey child_key, context_keys
         if score == 0
-            return [child_key, listValues group context]
+            return [child_key, context.children]
     return [null, null]
 
+# This finds the best key (phrase e.g. "~ok %go") from the main tree
+# given keys from context children e.g. ['%go', '$there'] by counting
+# the difference in keys (the goal is to have 0 missing or extra)
 scoreKey = (child_key, context_keys) ->
     if VERBOSE
         console.log '[scoreKey]', child_key, context_keys
@@ -48,6 +45,7 @@ contextAsString = (l) ->
     if typeof l == 'string'
         l
     else
+        return JSON.stringify l
         group(l).map((g) -> g.map(contextAsString).join(': ')).join(', ')
 
 module.exports = generate = (root, entry_key='%' ,context={}, options={}) ->
@@ -77,7 +75,7 @@ module.exports = generate = (root, entry_key='%' ,context={}, options={}) ->
             if token[0] == '%' # Expand sub phrase
                 expanded.push generate root, token, sub_context, options
             else # Variable 
-                expanded.push sub_context
+                expanded.push sub_context.children
         else
             if token[0] == '~' # Synonym
                 if token.match /\?$/
