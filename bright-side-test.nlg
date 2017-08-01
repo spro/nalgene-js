@@ -1,0 +1,54 @@
+%
+    ~first_paragraph_starter %high_report \n ~middle_paragraph_starter %low_report \n ~last_paragraph_starter %middle_report
+    ~first_paragraph_starter %high_report \n ~middle_paragraph_starter %low_report
+    ~first_paragraph_starter %high_report \n ~middle_paragraph_starter %middle_report
+    ~first_paragraph_starter %high_report
+    ~first_paragraph_starter %low_report
+    ~first_paragraph_starter %middle_report
+    %empty
+
+%high_report
+    ~you_are $high_scale_phrases:~joiner .
+
+%middle_report
+    ~you_are $middle_scale_phrases:~joiner .
+
+%low_report
+    ~you_are $low_scale_phrases:~joiner .
+
+~joiner
+    . ~also? ~you_are
+
+%empty
+    We can't tell much about you.
+
+~you_are
+    you're
+    you are
+
+~also
+    Furthermore,
+    Similarly,
+    In addition,
+    Your scores also suggest that
+
+~however
+    However,
+    But beware,
+
+~first_paragraph_starter
+    $name , based on your scores, we think that
+
+~middle_paragraph_starter
+    Taking a closer look at how you have answered our questions, we believe
+    Furthermore, 
+    Likewise, 
+    Similarly, 
+    Also,
+    In addition,
+    Furthermore, 
+    More so,
+    Generally speaking, 
+
+~last_paragraph_starter
+    Finally,
