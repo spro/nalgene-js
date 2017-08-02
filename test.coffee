@@ -15,5 +15,8 @@ values = {
 formatters =
     dollars: (v) -> '$' + v.toFixed(2)
 
-console.log nalgene grammar_filename, {values, formatters}
+grammar = nalgene.parse grammar_filename
+console.log nalgene.generate grammar, {values, formatters}
 
+
+console.log nalgene.generate.fromPlainString 'Just testing this hi there $name', {values: {name: 'Jones'}}

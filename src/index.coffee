@@ -1,36 +1,40 @@
 nearley = require 'nearley'
 util = require 'util'
 fs = require 'fs'
-grammar = require './grammar'
+parser_grammar = require './grammar'
 {inspect, sortBy, flatten, randomChoice, fixPunctuation} = require './helpers'
 
 # Parse and index blocks (phrase and synonym sections)
 # ------------------------------------------------------------------------------
 
-parseAndIndex = (grammar_filename) ->
-    input = fs.readFileSync(grammar_filename, 'utf8').trim()
-    parser = new (nearley.Parser)(grammar.ParserRules, grammar.ParserStart)
-    parser.feed input
-    parsed = parser.results[0]
+exports.parse = parse = (grammar_string) ->
+    if grammar_string.endsWith '.nlg'
+        grammar_string = fs.readFileSync(grammar_string, 'utf8')
+    grammar_string = grammar_string.trim()
 
-    indexed =
+    parser = new (nearley.Parser)(parser_grammar.ParserRules, parser_grammar.ParserStart)
+    parser.feed grammar_string
+    parsed = parser.results[0]
+    console.log '[parsed]', parsed
+
+    grammar =
         phrases: {}
         synonyms: {}
 
     parsed.forEach (block) ->
         # inspect 'block', block
         if block.phrase
-            indexed.phrases[block.phrase] = block
+            grammar.phrases[block.phrase] = block
         else if block.phrase == ''
-            indexed.phrases.root = block
+            grammar.phrases.root = block
         else if block.synonym
-            indexed.synonyms[block.synonym] = block
+            grammar.synonyms[block.synonym] = block
 
-    for phrase_key, phrases of indexed.phrases
+    for phrase_key, phrases of grammar.phrases
         phrases.lines.forEach (phrase, pi) ->
-            phrase.dependencies = getPhraseDependencies phrase, indexed
+            phrase.dependencies = getPhraseDependencies phrase, grammar
 
-    return indexed
+    return grammar
 
 # Attach chain of dependencies to phrases
 # ------------------------------------------------------------------------------
@@ -38,7 +42,7 @@ parseAndIndex = (grammar_filename) ->
 # a "chain of dependencies" which specifies which values are required to expand
 # this phrase.
 
-getPhraseDependencies = (phrase, indexed) ->
+getPhraseDependencies = (phrase, grammar) ->
     phrase_values = phrase
         .filter (token) -> token.value?
         .map (token) -> token.value
@@ -46,8 +50,8 @@ getPhraseDependencies = (phrase, indexed) ->
         .filter (token) -> token.phrase?
         .map (token) -> token.phrase
     sub_dependencies = flatten flatten phrase_phrases.map (phrase_key) ->
-        indexed.phrases[phrase_key].lines.map (phrase, pi) ->
-            getPhraseDependencies phrase, indexed
+        grammar.phrases[phrase_key].lines.map (phrase, pi) ->
+            getPhraseDependencies phrase, grammar
 
     return phrase_values.concat sub_dependencies
 
@@ -90,7 +94,7 @@ bestChoice = (phrases, values) ->
 # Expanding phrases into strings
 # ------------------------------------------------------------------------------
 
-expandToken = (token, indexed, context) ->
+expandToken = (token, grammar, context) ->
     expanded = []
 
     # Expand a word (nothing else to do here)
@@ -99,14 +103,14 @@ expandToken = (token, indexed, context) ->
 
     # Expand a phrase
     else if phrase_token = token.phrase
-        phrase = indexed.phrases[phrase_token]
-        this_expanded = expandPhrase phrase, indexed, context
+        phrase = grammar.phrases[phrase_token]
+        this_expanded = expandPhrase phrase, grammar, context
         expanded.push this_expanded
 
     # Expand a synonym (usually simple random choice)
     else if synonym_token = token.synonym
-        synonym = indexed.synonyms[synonym_token]
-        expanded.push expandSynonym synonym, indexed, context
+        synonym = grammar.synonyms[synonym_token]
+        expanded.push expandSynonym synonym, grammar, context
 
     # Expand a value, possibly an array with joiners, possibly formatted
     else if value_token = token.value
@@ -120,18 +124,18 @@ expandToken = (token, indexed, context) ->
             # Up to second to last item with regular joiner
             for item in value.slice(0, -2)
                 expanded.push item
-                expanded.push expandToken joiner, indexed, context
+                expanded.push expandToken joiner, grammar, context
 
             # Second to last item, last joiner
             if secondary = token.secondary
                 expanded.push value.slice(-2)[0]
                 if token.oxford
-                    expanded.push expandToken joiner, indexed, context
-                expanded.push expandToken secondary, indexed, context
+                    expanded.push expandToken joiner, grammar, context
+                expanded.push expandToken secondary, grammar, context
 
             else
                 expanded.push value.slice(-2)[0]
-                expanded.push expandToken joiner, indexed, context
+                expanded.push expandToken joiner, grammar, context
 
             # Last item
             expanded.push value.slice(-1)[0]
@@ -145,22 +149,26 @@ expandToken = (token, indexed, context) ->
 
     return expanded
 
-expandPhrase = (phrase, indexed, context) ->
+expandPhrase = (phrase, grammar, context) ->
     expanded = []
     line = bestChoice phrase.lines, context.values
     for token in line
-        expanded = expanded.concat expandToken token, indexed, context
+        expanded = expanded.concat expandToken token, grammar, context
     return expanded.join ' '
 
 # TODO: Should it be required that synonyms do not contain values?
-expandSynonym = (synonym, indexed, context) ->
+expandSynonym = (synonym, grammar, context) ->
     expanded = []
     line = randomChoice synonym.lines
     for token in line
-        expanded = expanded.concat expandToken token, indexed, context
+        expanded = expanded.concat expandToken token, grammar, context
     return expanded.join ' '
 
-module.exports = generate = (grammar_filename, context) ->
-    indexed = parseAndIndex grammar_filename
-    fixPunctuation expandPhrase indexed.phrases.root, indexed, context
+exports.generate = generate = (grammar, context) ->
+    fixPunctuation expandPhrase grammar.phrases.root, grammar, context
+
+exports.generate.fromPlainString = (grammar_string, context) ->
+    grammar_string = '%\n\t' + grammar_string
+    grammar = parse grammar_string
+    generate grammar, context
 
