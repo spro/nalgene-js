@@ -82,7 +82,11 @@ do ->
           {"name": "esc_word_char$string$6", "symbols": [{"literal":"\\"}, {"literal":";"}], "postprocess": (d) -> d.join('')},
           {"name": "esc_word_char", "symbols": ["esc_word_char$string$6"], "postprocess": -> ";"},
           {"name": "esc_word_char$string$7", "symbols": [{"literal":"\\"}, {"literal":"?"}], "postprocess": (d) -> d.join('')},
-          {"name": "esc_word_char", "symbols": ["esc_word_char$string$7"], "postprocess": -> "?"}
+          {"name": "esc_word_char", "symbols": ["esc_word_char$string$7"], "postprocess": -> "?"},
+          {"name": "esc_word_char$string$8", "symbols": [{"literal":"\\"}, {"literal":"("}], "postprocess": (d) -> d.join('')},
+          {"name": "esc_word_char", "symbols": ["esc_word_char$string$8"], "postprocess": -> "("},
+          {"name": "esc_word_char$string$9", "symbols": [{"literal":"\\"}, {"literal":")"}], "postprocess": (d) -> d.join('')},
+          {"name": "esc_word_char", "symbols": ["esc_word_char$string$9"], "postprocess": -> ")"}
       ],
     ParserStart: "blocks"
   }
