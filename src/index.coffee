@@ -14,7 +14,7 @@ exports.parse = parse = (grammar_string) ->
     parser = new (nearley.Parser)(parser_grammar.ParserRules, parser_grammar.ParserStart)
     parser.feed grammar_string
     parsed = parser.results[0]
-    inspect 'parsed', parsed
+    # inspect 'parsed', parsed
 
     grammar =
         phrases: {}
