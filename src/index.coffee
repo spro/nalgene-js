@@ -1,5 +1,4 @@
 nearley = require 'nearley'
-util = require 'util'
 fs = require 'fs'
 parser_grammar = require './grammar'
 {inspect, sortBy, flatten, randomChoice, fixPunctuation} = require './helpers'
@@ -15,7 +14,7 @@ exports.parse = parse = (grammar_string) ->
     parser = new (nearley.Parser)(parser_grammar.ParserRules, parser_grammar.ParserStart)
     parser.feed grammar_string
     parsed = parser.results[0]
-    console.log '[parsed]', parsed
+    inspect 'parsed', parsed
 
     grammar =
         phrases: {}
@@ -101,11 +100,17 @@ expandToken = (token, grammar, context) ->
     if word_token = token.word
         expanded.push word_token
 
+    # Expand a group (an array of tokens)
+    else if group_token = token.group
+        group_expanded = token.group.map (token) ->
+            expandToken token, grammar, context
+        expanded.push group_expanded.join ' '
+
     # Expand a phrase
     else if phrase_token = token.phrase
         phrase = grammar.phrases[phrase_token]
-        this_expanded = expandPhrase phrase, grammar, context
-        expanded.push this_expanded
+        phrase_expanded = expandPhrase phrase, grammar, context
+        expanded.push phrase_expanded
 
     # Expand a synonym (usually simple random choice)
     else if synonym_token = token.synonym

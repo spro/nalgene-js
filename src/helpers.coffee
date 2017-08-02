@@ -1,3 +1,5 @@
+util = require 'util'
+
 exports.inspect = (tag, o) ->
     console.log "[#{tag}]", util.inspect o, {colors: true, depth: null}
 
