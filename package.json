@@ -12,7 +12,7 @@
     "build": "coffee --bare -o lib -c src && echo '#!/usr/bin/env node' | cat - lib/cli.js > lib/cli.tmp.js && mv lib/cli.tmp.js lib/cli.js"
   },
   "bin": {
-    "nalgene": "lib/generate.js"
+    "nalgene": "lib/cli.js"
   },
   "dependencies": {
     "minimist": "^1.2.0"

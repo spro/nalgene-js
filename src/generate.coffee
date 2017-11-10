@@ -1,4 +1,3 @@
-fs = require 'fs'
 minimist = require 'minimist'
 {randomChoice, flatten, splitToken, asSentence} = require './helpers'
 parse = require './parse'
@@ -74,7 +73,7 @@ module.exports = generate = (root, entry_key='%' ,context={}, options={}) ->
             sub_context = contexts[i]
             if token[0] == '%' # Expand sub phrase
                 expanded.push generate root, token, sub_context, options
-            else # Variable 
+            else # Variable
                 expanded.push sub_context.children
         else
             if token[0] == '~' # Synonym
@@ -163,25 +162,3 @@ expandTokens = (tokens, root, context) ->
 module.exports.fromPlainString = (string, context) ->
     root = parse.fromObject {'%': string}
     generate root, context
-
-# Run as a script
-if require.main == module
-    argv = minimist(process.argv.slice(2))
-    parse = require './parse'
-
-    filename = process.argv[2]
-    if !filename?
-        console.log "Usage: nalgene [file.nlg] (--key=value...)"
-        process.exit()
-
-    # Parse the gramamr file
-    grammar = parse fs.readFileSync filename, 'utf8'
-
-    # Build context from arguments
-    context = {}
-    for k, v of argv
-        context['$' + k] =  v
-
-    # Generate
-    console.log generate grammar, context
-
