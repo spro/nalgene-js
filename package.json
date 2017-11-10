@@ -9,12 +9,15 @@
   "license": "MIT",
   "main": "lib/index.js",
   "scripts": {
-    "build": "make"
+    "build": "coffee --bare -o lib -c src && echo '#!/usr/bin/env node' | cat - lib/cli.js > lib/cli.tmp.js && mv lib/cli.tmp.js lib/cli.js"
   },
   "bin": {
     "nalgene": "lib/generate.js"
   },
   "dependencies": {
     "minimist": "^1.2.0"
+  },
+  "devDependencies": {
+    "coffee-script": "^1.12.7"
   }
 }
