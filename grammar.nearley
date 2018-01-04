@@ -43,8 +43,10 @@ synonym_token ->
     | "~" word {% labeled 'synonym' %}
 
 value_token ->
-    "$" word ":" joiners {% (d) -> Object.assign {value: d[1]}, d[3] %}
+    "$" word "*%" word ":" joiners {% (d) -> Object.assign {value: d[1], expander: d[3]}, d[5] %}
+    | "$" word ":" joiners {% (d) -> Object.assign {value: d[1]}, d[3] %}
     | "$" word "|" word {% (d) -> Object.assign {value: d[1]}, {formatter: d[3]} %}
+    | "$" word "*%" word {% (d) -> Object.assign {value: d[1]}, {expander: d[3]} %}
     | "$" word {% labeled 'value' %}
 
 joiners ->
@@ -96,13 +98,14 @@ word ->
     word_char:* {% (d) -> d[0].join('') %}
 
 word_char ->
-    [^\s:;$%~?()|]
+    [^\s:;$%*~?()|]
     | esc_word_char
 
 esc_word_char ->
     "\\$" {% -> "$" %}
     | "\\~" {% -> "~" %}
     | "\\%" {% -> "%" %}
+    | "\\*" {% -> "*" %}
     | "\\|" {% -> "|" %}
     | "\\:" {% -> ":" %}
     | "\\;" {% -> ";" %}

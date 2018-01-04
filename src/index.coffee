@@ -94,6 +94,7 @@ bestChoice = (phrases, values) ->
 # ------------------------------------------------------------------------------
 
 expandToken = (token, grammar, context) ->
+    # inspect 'expandToken', token
     expanded = []
 
     # Expand a word (nothing else to do here)
@@ -121,7 +122,18 @@ expandToken = (token, grammar, context) ->
     else if value_token = token.value
         value = context.values[value_token]
 
+        if expander = token.expander
+            tokenExpander = (item) ->
+                # inspect 'item', item
+                item_context = Object.assign {}, context, {values: item}
+                expandToken {phrase: expander}, grammar, item_context
+            if Array.isArray value
+                value = value.map tokenExpander
+            else
+                value = tokenExpander value
+
         if Array.isArray(value) and joiner = token.joiner
+
             if value.length == 1
                 expanded.push value[0]
                 return expanded
