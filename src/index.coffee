@@ -181,8 +181,8 @@ expandSynonym = (synonym, grammar, context) ->
         expanded = expanded.concat expandToken token, grammar, context
     return expanded.join ' '
 
-exports.generate = generate = (grammar, context) ->
-    fixPunctuation expandPhrase grammar.phrases.root, grammar, context
+exports.generate = generate = (grammar, context, root_node='root') ->
+    fixPunctuation expandPhrase grammar.phrases[root_node], grammar, context
 
 exports.generate.fromPlainString = (grammar_string, context) ->
     grammar_string = '%\n\t' + grammar_string
