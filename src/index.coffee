@@ -35,6 +35,23 @@ exports.parse = parse = (grammar_string) ->
 
     return grammar
 
+# Helper for turning a parsed phrase back into a string, used in error messages
+unparse = (phrase) ->
+    unparsed = ""
+    phrase.map (token) ->
+        if token.word
+            unparsed += token.word
+        else if token.value
+            unparsed += "$" + token.value
+        if token.formatter
+            unparsed += "|" + token.formatter
+        else if token.synonym
+            unparsed += "~" + token.synonym
+        else if token.phrase
+            unparsed += "%" + token.phrase
+        unparsed += " "
+    return unparsed.trim()
+
 # Attach chain of dependencies to phrases
 # ------------------------------------------------------------------------------
 # In order to efficiently support phrase selection (see next) each phrase needs
@@ -49,6 +66,7 @@ getPhraseDependencies = (phrase, grammar) ->
         .filter (token) -> token.phrase?
         .map (token) -> token.phrase
     sub_dependencies = flatten flatten phrase_phrases.map (phrase_key) ->
+        throw "No such phrase %#{phrase_key}" if not grammar.phrases[phrase_key]
         grammar.phrases[phrase_key].lines.map (phrase, pi) ->
             getPhraseDependencies phrase, grammar
 
@@ -68,6 +86,9 @@ getPhraseDependencies = (phrase, grammar) ->
 # to be checked to verify the parent's validity. This might be done by pre-
 # attaching a chain of dependencies right after parsing.
 
+countDependencies = (phrase) ->
+    return phrase.dependencies.length
+
 bestChoice = (phrases, values) ->
     available_values = Object.keys values
 
@@ -78,9 +99,17 @@ bestChoice = (phrases, values) ->
                 return false
         return true
 
+    if filtered_phrases.length == 0
+        # Go back and count which dependencies are missing per phrase
+        error_message = "No usable phrases, missing values for phrases:\n"
+        for phrase in phrases
+            error_message += '    ' + unparse(phrase) + '\n'
+            for dependency in phrase.dependencies
+                if dependency not in available_values
+                    error_message += '        $' + dependency + '\n'
+        throw error_message
+
     # Select best phrases (those with highest number of available values)
-    countDependencies = (phrase) ->
-        return phrase.dependencies.length
     value_counts = filtered_phrases.map countDependencies
     best_phrases = sortBy filtered_phrases, countDependencies
     best_count = countDependencies best_phrases[0]
@@ -158,6 +187,7 @@ expandToken = (token, grammar, context) ->
             expanded.push value.slice(-1)[0]
 
         else if formatter = token.formatter
+            throw "No such formatter '#{formatter}'" if not context.formatters?[formatter]
             formatted = context.formatters[formatter](value)
             expanded.push formatted
 
