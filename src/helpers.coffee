@@ -19,9 +19,7 @@ exports.randomChoice = (l) ->
 
 exports.fixPunctuation = (s) ->
     s = s.trim().replace /\s+/g, ' '
-    s = s.replace /\ ([,.!?])/g, '$1'
+    s = s.replace /\ ([,.!?:])/g, '$1'
     s = s.trim()
-    if s.slice(-1)[0] not in '.!?'
-        s += '.'
-    s
+    return s
 
