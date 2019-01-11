@@ -14,6 +14,13 @@ exports.flatten = (ls) ->
             flat.push i
     return flat
 
+exports.usedKeys = (o) ->
+    ks = []
+    for k, v of o
+        if v?
+            ks.push k
+    return ks
+
 exports.randomChoice = (l) ->
     l[Math.floor Math.random() * l.length]
 

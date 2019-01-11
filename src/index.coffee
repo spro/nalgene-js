@@ -1,7 +1,7 @@
 nearley = require 'nearley'
 fs = require 'fs'
 parser_grammar = require './grammar'
-{inspect, sortBy, flatten, randomChoice, fixPunctuation} = require './helpers'
+{inspect, sortBy, flatten, usedKeys, randomChoice, fixPunctuation} = require './helpers'
 
 # Parse and index blocks (phrase and synonym sections)
 # ------------------------------------------------------------------------------
@@ -90,7 +90,7 @@ countDependencies = (phrase) ->
     return phrase.dependencies.length
 
 bestChoice = (phrases, values) ->
-    available_values = Object.keys values
+    available_values = usedKeys values
 
     # Filter out unusable phrases (those with values not provided by object)
     filtered_phrases = phrases.filter (phrase) ->
